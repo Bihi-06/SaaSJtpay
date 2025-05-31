@@ -7,6 +7,7 @@ type SuccessResponse = {
   status: string;
   message: string;
   validationToken: string;
+  url : string;
 };
 
 type ErrorResponse = {
@@ -34,7 +35,7 @@ export default async function handler(
   try {
     // Make the request to your backend service
     const response = await axios.post(
-      'http://192.168.11.100:2030/api/business-transactions/otp/process',
+      'http://192.168.11.106:2030/api/business-transactions/otp/process',
       { token, cardToken, otp }
     );
 
@@ -42,7 +43,7 @@ export default async function handler(
     console.log("Response data from backend:", response.data);
 
     // Send the transformed data
-    res.status(200).json({ message: "Payment processed successfully", status: response.data.status, validationToken: response.data.validationToken });
+    res.status(200).json({ message: "Payment processed successfully", status: response.data.status, validationToken: response.data.validationToken , url : response.data.url });
   } catch (error) {
     console.error("Error fetching payment info:", error);
 
