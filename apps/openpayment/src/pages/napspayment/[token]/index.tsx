@@ -612,6 +612,7 @@ const PaymentPage: React.FC = () => {
         // Handle success
         if (typeof token === 'string') {
           localStorage.setItem('token', token);
+          localStorage.setItem('cardnumber', cardNumber.replace(/\s/g, ''));
           localStorage.setItem('cardToken', response.data.validationToken);
         } else {
           console.error("Token is not a valid string:", token);
