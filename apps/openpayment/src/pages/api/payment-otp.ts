@@ -35,7 +35,9 @@ export default async function handler(
   try {
     // Make the request to your backend service
     const response = await axios.post(
-      "http://192.168.0.198:2030/api/business-transactions/otp/process",
+
+      'https://keycloakssbms.dedyn.io/jtpay-service/api/business-transactions/otp/process',
+
       { token, cardToken, otp }
     );
 
