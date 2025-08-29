@@ -34,7 +34,9 @@ export default async function handler(
   try {
     // Make the request to your backend service
     const response = await axios.post(
+
       'https://keycloakssbms.dedyn.io/jtpay-service/api/business-transactions/payments/process',
+
       { token, cardNumber, cardHolderName, expiryDate, cvv }
     );
 
