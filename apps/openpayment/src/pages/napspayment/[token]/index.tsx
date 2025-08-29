@@ -632,12 +632,27 @@ const PaymentPage: React.FC = () => {
       });
   };
 
-  const handleCancel = () => {
-    showNotification('Votre transaction a été annulée.', 'error');
-    setTimeout(() => {
-      // Navigate back or to cancel page
-      router.push('/payment-canceled');
-    }, 1500);
+  const handleCancel = async () => {
+    showNotification("Votre transaction a été annulée.", "error");
+
+    try {
+      // Call the cancel API to get the external return URL (same approach as OTP)
+      const response = await axios.post("/api/payment-cancel", { token });
+
+      setTimeout(() => {
+        if (response.data && response.data.url) {
+          // Use the same external redirect as successful OTP verification
+          console.log("response.data", response);
+          window.location.href = response.data.url;
+        } else {
+          // Fallback to internal cancel page
+          console.log("ERRORR TT")
+        }
+      }, 1500);
+    } catch (error) {
+      console.error("Error during cancellation:", error);
+      // Fallback to internal cancel page on error
+    }
   };
 
   // Card number formatting and validation
